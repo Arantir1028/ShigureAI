@@ -1,0 +1,26 @@
+# 忽略打包输出
+build/
+dist/
+
+# 忽略Python缓存
+__pycache__/
+*.pyc
+*.pyo
+
+# 忽略用户数据
+configs/
+
+# 忽略日志和临时文件
+*.log
+*.tmp
+
+# 忽略执行文件
+*.exe
+
+# 忽略IDE文件
+.idea/
+.vscode/
+
+# 忽略其他不必要
+*.bak
+*~
