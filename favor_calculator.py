@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-__version__ = "v0.0.1"
+__version__ = "v0.0.2"
 
 import sys
 import os
@@ -110,12 +110,160 @@ class FavorCalculator(QMainWindow):
 
     def show_version(self):
         """显示版本信息"""
-        QMessageBox.information(self, "版本信息",
-                               f"当前版本: {__version__}\n\n"
-                               f"这是ShigureAI {__version__}，包含以下功能：\n"
-                               f"• 支持学生特殊喜好礼物配置\n"
-                               f"• 支持批量导入和计算好感度升级\n"
-                               f"• 支持保存/加载配置\n")
+        from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTextEdit, QApplication
+        import requests
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle("版本信息")
+        dialog.setModal(True)
+        dialog.resize(500, 400)
+
+        layout = QVBoxLayout(dialog)
+
+        # 标题
+        title_label = QLabel(f"<h2>ShigureAI {__version__}</h2>")
+        title_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title_label)
+
+        # 版本信息
+        version_info = QTextEdit()
+        version_info.setMaximumHeight(200)
+        version_info.setHtml(
+            f"<h3>当前版本: {__version__}</h3>"
+            f"<p><strong>功能特性:</strong></p>"
+            f"<ul>"
+            f"<li>支持学生特殊喜好礼物配置</li>"
+            f"<li>支持批量导入和计算好感度升级</li>"
+            f"<li>支持保存/加载配置</li>"
+            f"</ul>"
+        )
+        version_info.setReadOnly(True)
+        layout.addWidget(version_info)
+
+        # 更新检查区域
+        update_layout = QHBoxLayout()
+
+        self.update_status_label = QLabel("准备检查更新...")
+        self.update_status_label.setStyleSheet("color: gray;")
+        update_layout.addWidget(self.update_status_label)
+
+        update_layout.addStretch()
+
+        check_button = QPushButton("检查更新")
+        check_button.clicked.connect(lambda: self.check_for_updates(dialog))
+        update_layout.addWidget(check_button)
+
+        layout.addLayout(update_layout)
+
+        # 按钮区域
+        button_layout = QHBoxLayout()
+
+        close_button = QPushButton("关闭")
+        close_button.clicked.connect(dialog.accept)
+        button_layout.addWidget(close_button)
+
+        layout.addLayout(button_layout)
+
+        dialog.exec_()
+
+    def check_for_updates(self, parent_dialog):
+        """检查更新"""
+        try:
+            import requests
+            from PyQt5.QtWidgets import QMessageBox
+
+            self.update_status_label.setText("正在检查更新...")
+            self.update_status_label.setStyleSheet("color: blue;")
+
+            QApplication.processEvents()
+
+            # GitHub API获取最新release信息
+            api_url = "https://api.github.com/repos/Arantir1028/ShigureAI/releases/latest"
+            response = requests.get(api_url, timeout=10)
+
+            if response.status_code == 200:
+                release_data = response.json()
+                latest_version = release_data['tag_name']
+
+                # 比较版本
+                current_version = __version__.lstrip('v')
+                latest_version_num = latest_version.lstrip('v')
+
+                if self.compare_versions(latest_version_num, current_version) > 0:
+                    # 有新版本
+                    self.update_status_label.setText(f"发现新版本: {latest_version}")
+                    self.update_status_label.setStyleSheet("color: green;")
+
+                    reply = QMessageBox.question(
+                        parent_dialog,
+                        "发现新版本",
+                        f"当前版本: {__version__}\n"
+                        f"最新版本: {latest_version}\n\n"
+                        f"是否前往下载页面?",
+                        QMessageBox.Yes | QMessageBox.No
+                    )
+
+                    if reply == QMessageBox.Yes:
+                        import webbrowser
+                        webbrowser.open("https://github.com/Arantir1028/ShigureAI/releases/latest")
+
+                else:
+                    # 已经是最新版本
+                    self.update_status_label.setText(f"当前已是最新版本: {__version__}")
+                    self.update_status_label.setStyleSheet("color: green;")
+
+                    QMessageBox.information(
+                        parent_dialog,
+                        "版本检查",
+                        f"当前版本 {__version__} 已是最新版本！"
+                    )
+
+            else:
+                # API请求失败
+                self.update_status_label.setText("检查更新失败")
+                self.update_status_label.setStyleSheet("color: red;")
+
+                QMessageBox.warning(
+                    parent_dialog,
+                    "检查更新",
+                    "无法连接到GitHub服务器，请稍后重试。"
+                )
+
+        except ImportError:
+            self.update_status_label.setText("缺少requests库")
+            self.update_status_label.setStyleSheet("color: red;")
+
+            QMessageBox.warning(
+                parent_dialog,
+                "依赖缺失",
+                "需要安装requests库来检查更新。\n"
+                "请运行: pip install requests"
+            )
+
+        except Exception as e:
+            self.update_status_label.setText("检查失败")
+            self.update_status_label.setStyleSheet("color: red;")
+
+            QMessageBox.warning(
+                parent_dialog,
+                "检查更新",
+                f"检查更新时发生错误:\n{str(e)}"
+            )
+
+    def compare_versions(self, version1, version2):
+        """比较版本号 (返回1: v1>v2, 0: v1=v2, -1: v1<v2)"""
+        def version_to_tuple(v):
+            return tuple(map(int, v.split('.')))
+
+        v1_tuple = version_to_tuple(version1)
+        v2_tuple = version_to_tuple(version2)
+
+        if v1_tuple > v2_tuple:
+            return 1
+        elif v1_tuple < v2_tuple:
+            return -1
+        else:
+            return 0
 
     def create_left_panel(self):
         """创建左侧配置面板"""
@@ -879,8 +1027,8 @@ class FavorCalculator(QMainWindow):
                             self.student_configs[config_name] = converted_config
                             configs_loaded += 1
 
-                    # 更新UI
-                    self.update_config_combo()
+                        # 更新UI
+                        self.update_config_combo()
 
                     # 设置第一个新加载的配置为当前配置
                     if configs_loaded > 0:

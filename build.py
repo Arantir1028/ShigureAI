@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-__version__ = "v0.0.1"
+__version__ = "v0.0.2"
 
 import os
 import sys
@@ -31,29 +31,9 @@ def build_executable():
 
     cmd = [
         'pyinstaller',
-        f'--name=ShigureAI_{__version__}',
-        '--onefile',
-        '--windowed',
-        '--icon=icon.ico',
-        f'--add-data=giftID.xlsx{sep}.',
-        f'--add-data=exp.xlsx{sep}.',
-        f'--add-data=icon.ico{sep}.',
-        f'--add-data=bacv.txt{sep}.',
-        f'--add-data=pic;pic',
-        '--hidden-import=pandas',
-        '--hidden-import=numpy',
-        '--hidden-import=openpyxl',
-        '--hidden-import=Pillow',
-        '--hidden-import=PyQt5.QtWidgets',
-        '--hidden-import=PyQt5.QtGui',
-        '--hidden-import=PyQt5.QtCore',
-        '--exclude-module=tkinter',
-        '--exclude-module=turtle',
-        '--exclude-module=matplotlib',
-        '--exclude-module=scipy',
+        'Shigure_ai.spec',
         '--clean',
-        '--noconfirm',
-        'favor_calculator.py'
+        '--noconfirm'
     ]
 
     print("执行 PyInstaller 命令：")

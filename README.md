@@ -1,11 +1,11 @@
 # ShigureAI (蔚蓝档案好感计算器)
 
-**版本: v0.0.1**
+**版本: v0.0.2**
 
 这是一个用于计算《蔚蓝档案》游戏中学生好感度的工具，支持特殊喜好礼物配置、批量导入和计算预计等级。
 
 ## 版本历史
-- **v0.0.1** (当前版本)
+- **v0.0.2** (当前版本)
   - 初始版本发布
   - 支持学生特殊喜好礼物配置
   - 支持批量导入和计算好感度升级
@@ -15,12 +15,21 @@
 - 配置学生特殊喜好礼物
 - 输入礼物数量并计算好感度升级
 - 支持联动学生模式
-- 支持通过bacv格式字符串导入库存，Alice用户可粘贴“ba导出bacv”得到的字符串一键导入库存
+- 支持通过bacv格式字符串导入库存，Alice用户可粘贴"ba导出bacv"得到的字符串一键导入库存
 - 保存/加载配置
+- 在线版本检查和更新提示
 
 ## 安装
-1. 安装依赖：`pip install pandas PyQt5 openpyxl`
+1. 安装依赖：`pip install -r requirements.txt`
 2. 运行：`python favor_calculator.py`
+
+### 依赖包说明
+- PyQt5 - GUI框架
+- pandas - 数据处理
+- numpy - 数值计算
+- openpyxl - Excel文件处理
+- Pillow - 图像处理
+- requests - HTTP请求（用于版本检查）
 
 ## 使用
 - 创建或加载配置
@@ -28,8 +37,16 @@
 - 输入礼物数量
 - 点击计算查看结果
 
+### 版本检查
+- 点击菜单栏 `帮助` → `版本信息`
+- 点击 `检查更新` 按钮获取最新版本信息
+- 如果有新版本，会提示前往GitHub下载页面
+- 更新地址：https://github.com/Arantir1028/ShigureAI/releases/latest
+
 ## 构建可执行文件
 使用PyInstaller打包：`python build.py`
+
+> **注意**: 脚本会自动使用 `Shigure_ai.spec` 配置文件进行构建，避免生成重复的spec文件。
 
 ## 贡献
 欢迎PR！请fork仓库并提交更改。
