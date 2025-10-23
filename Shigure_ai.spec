@@ -5,7 +5,7 @@ a = Analysis(
     ['favor_calculator.py'],
     pathex=[],
     binaries=[],
-    datas=[('giftID.xlsx', '.'), ('exp.xlsx', '.'), ('icon.jpg', '.'), ('bacv.txt', '.'), ('pic', 'pic')],
+    datas=[('giftID.xlsx', '.'), ('exp.xlsx', '.'), ('icon.ico', '.'), ('bacv.txt', '.'), ('pic', 'pic')],
     hiddenimports=['pandas', 'numpy', 'openpyxl', 'Pillow', 'PyQt5.QtWidgets', 'PyQt5.QtGui', 'PyQt5.QtCore'],
     hookspath=[],
     hooksconfig={},
@@ -35,5 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['icon.jpg'],
+    icon=['icon.ico'],
 )

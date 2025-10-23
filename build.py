@@ -16,7 +16,7 @@ def build_executable():
     print("开始打包可执行文件...")
     sep = ';' if platform.system() == 'Windows' else ':'
 
-    required_files = ['favor_calculator.py', 'giftID.xlsx', 'exp.xlsx', 'icon.jpg', 'bacv.txt']
+    required_files = ['favor_calculator.py', 'giftID.xlsx', 'exp.xlsx', 'icon.ico', 'bacv.txt']
     required_dirs = ['pic']
 
     for file in required_files:
@@ -34,10 +34,10 @@ def build_executable():
         f'--name=ShigureAI_{__version__}',
         '--onefile',
         '--windowed',
-        '--icon=icon.jpg',
+        '--icon=icon.ico',
         f'--add-data=giftID.xlsx{sep}.',
         f'--add-data=exp.xlsx{sep}.',
-        f'--add-data=icon.jpg{sep}.',
+        f'--add-data=icon.ico{sep}.',
         f'--add-data=bacv.txt{sep}.',
         f'--add-data=pic;pic',
         '--hidden-import=pandas',

@@ -63,7 +63,7 @@ class FavorCalculator(QMainWindow):
     def init_ui(self):
         """初始化UI"""
         self.setWindowTitle(f"ShigureAI {__version__}")
-        self.setWindowIcon(QIcon(resource_path("icon.jpg")))
+        self.setWindowIcon(QIcon(resource_path("icon.ico")))
         self.setGeometry(100, 100, 1200, 800)
 
         self.create_menu_bar()
