@@ -5,8 +5,11 @@ __version__ = "v0.0.1"
 
 import os
 import sys
+import io
 import subprocess
 import platform
+
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 def build_executable():
     """打包可执行文件"""
