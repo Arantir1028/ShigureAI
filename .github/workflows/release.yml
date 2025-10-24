@@ -2,8 +2,8 @@ name: Build and Release
 
 on:
   push:
-    branches:
-      - main  # 当推送到main分支时触发
+    tags:
+      - 'v*'
   workflow_dispatch:  # 也可以手动触发
 
 jobs:
@@ -27,6 +27,15 @@ jobs:
       - name: Install Nuitka dependencies
         run: |
           pip install nuitka
+
+      - name: Setup Nuitka dependency cache
+        shell: pwsh
+        run: |
+          $cachePath = "$env:LOCALAPPDATA\Nuitka\Nuitka\Cache\Downloads\depends\x86_64"
+          Write-Host "Creating cache directory at $cachePath"
+          New-Item -ItemType Directory -Force -Path $cachePath | Out-Null
+          Copy-Item "tools\depends22_x64.zip" "$cachePath\depends22_x64.zip" -Force
+          Write-Host "✅ depends22_x64.zip placed successfully"
 
       - name: Install MinGW
         run: |
