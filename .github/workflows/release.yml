@@ -43,12 +43,12 @@ jobs:
             echo "C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin" >> $env:GITHUB_PATH
 
       - name: Run Nuitka build script
-        run: python build_nuitka.py
+        run: python build.py
 
       - name: Read version from build script
         id: version
         run: |
-          $version = python -c "import build_nuitka; print(build_nuitka.__version__)"
+          $version = python -c "import build; print(build.__version__)"
           echo "version=$version" >> $env:GITHUB_OUTPUT
 
       - name: Create GitHub Release

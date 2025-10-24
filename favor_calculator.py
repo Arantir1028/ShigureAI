@@ -709,7 +709,6 @@ class FavorCalculator(QMainWindow):
             self.config_modified = False  # 新配置创建完成，标记为未修改
 
     def delete_config(self):
-        """删除配置"""
         if not self.current_config:
             return
 
@@ -721,8 +720,7 @@ class FavorCalculator(QMainWindow):
             self.current_config = None
             self.update_config_combo()
             self.update_special_gifts_display()
-
-            self.save_config()
+            self.save_all_configs()
 
     def update_config_combo(self):
         """更新配置下拉框"""
@@ -1136,6 +1134,27 @@ class FavorCalculator(QMainWindow):
 
             QMessageBox.information(self, "成功", f"配置 '{self.current_config}' 已保存！")
             self.config_modified = False  # 配置已保存，标记为未修改
+        except Exception as e:
+            QMessageBox.critical(self, "错误", f"保存配置失败:\n{e}")
+
+    def save_all_configs(self):
+        config_dir = resource_path("configs", use_exe_dir_for_config=True)
+        os.makedirs(config_dir, exist_ok=True)
+        config_file = os.path.join(config_dir, "config.json")
+
+        def convert_sets(d):
+            return {k: list(v) if isinstance(v, set) else v for k, v in d.items()}
+
+        try:
+            all_configs = {}
+            for config_name, config in self.student_configs.items():
+                all_configs[config_name] = convert_sets(config)
+            
+            if self.current_config:
+                all_configs['_last_config'] = self.current_config
+
+            with open(config_file, 'w', encoding='utf-8') as f:
+                json.dump(all_configs, f, ensure_ascii=False, indent=2)
         except Exception as e:
             QMessageBox.critical(self, "错误", f"保存配置失败:\n{e}")
 

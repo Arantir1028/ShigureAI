@@ -14,7 +14,6 @@ import time
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 def build_executable():
-    """使用 Nuitka 打包可执行文件（优化版本）"""
     print("开始使用 Nuitka 打包可执行文件...")
     
     required_files = ['favor_calculator.py', 'giftID.csv', 'exp.csv', 'icon.ico', 'bacv.txt']
