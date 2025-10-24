@@ -50,6 +50,7 @@ def build_executable():
         '--disable-console',
         '--show-scons',
         '--disable-dll-dependency-cache',
+        '--disable-dll-dependency-scanning',
         '--noinclude-default-mode=error',
         '--windows-icon-from-ico=icon.ico',
         '--output-filename=ShigureAI_v0.0.3.exe',
