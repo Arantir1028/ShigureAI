@@ -29,7 +29,9 @@ jobs:
           pip install nuitka
 
       - name: Install MinGW
-        run: choco install mingw -y
+        run: |
+            choco install mingw -y
+            echo "C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin" >> $env:GITHUB_PATH
 
       - name: Run Nuitka build script
         run: python build_nuitka.py
