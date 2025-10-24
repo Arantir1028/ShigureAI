@@ -201,66 +201,130 @@ class FavorCalculator(QMainWindow):
 
         dialog.exec_()
 
-    def check_for_updates(self, parent_dialog):
-        """检查更新"""
-        try:
+    def get_download_urls(self, version):
+        """获取多源下载链接"""
+        base_filename = f"ShigureAI_{version}.exe"
+        return [
+            f"https://github.com/Arantir1028/ShigureAI/releases/download/{version}/{base_filename}",
+            f"https://ghfast.top/https://github.com/Arantir1028/ShigureAI/releases/download/{version}/{base_filename}",
+            f"https://mirror.ghproxy.com/https://github.com/Arantir1028/ShigureAI/releases/download/{version}/{base_filename}",
+        ]
 
+    def download_with_fallback(self, urls, dest_path):
+        """多源下载机制"""
+        for i, url in enumerate(urls):
+            try:
+                self.update_status_label.setText(f"尝试下载源 {i+1}/{len(urls)}...")
+                QApplication.processEvents()
+                
+                response = requests.get(url, timeout=15, stream=True)
+                if response.status_code == 200:
+                    total_size = int(response.headers.get('content-length', 0))
+                    downloaded = 0
+                    
+                    with open(dest_path, 'wb') as f:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            if chunk:
+                                f.write(chunk)
+                                downloaded += len(chunk)
+                                if total_size > 0:
+                                    progress = (downloaded / total_size) * 100
+                                    self.update_status_label.setText(f"下载中... {progress:.1f}%")
+                                    QApplication.processEvents()
+                    
+                    self.update_status_label.setText("下载完成！")
+                    self.update_status_label.setStyleSheet("color: green;")
+                    return True
+                    
+            except Exception as e:
+                print(f"下载源 {i+1} 失败: {e}")
+                continue
+        
+        self.update_status_label.setText("所有下载源均不可用")
+        self.update_status_label.setStyleSheet("color: red;")
+        return False
+
+    def check_for_updates(self, parent_dialog):
+        try:
             self.update_status_label.setText("正在检查更新...")
             self.update_status_label.setStyleSheet("color: blue;")
-
             QApplication.processEvents()
 
-            # GitHub API获取最新release信息
-            api_url = "https://api.github.com/repos/Arantir1028/ShigureAI/releases/latest"
-            response = requests.get(api_url, timeout=10)
+            api_urls = [
+                "https://api.github.com/repos/Arantir1028/ShigureAI/releases/latest",
+                "https://ghfast.top/https://api.github.com/repos/Arantir1028/ShigureAI/releases/latest",
+                "https://mirror.ghproxy.com/https://api.github.com/repos/Arantir1028/ShigureAI/releases/latest"
+            ]
+            
+            release_data = None
+            for api_url in api_urls:
+                try:
+                    response = requests.get(api_url, timeout=10)
+                    if response.status_code == 200:
+                        release_data = response.json()
+                        break
+                except:
+                    continue
+            
+            if not release_data:
+                self.update_status_label.setText("无法连接到更新服务器")
+                self.update_status_label.setStyleSheet("color: red;")
+                return
 
-            if response.status_code == 200:
-                release_data = response.json()
-                latest_version = release_data['tag_name']
+            latest_version = release_data['tag_name']
+            current_version = __version__.lstrip('v')
+            latest_version_num = latest_version.lstrip('v')
 
-                # 比较版本
-                current_version = __version__.lstrip('v')
-                latest_version_num = latest_version.lstrip('v')
+            if self.compare_versions(latest_version_num, current_version) > 0:
+                self.update_status_label.setText(f"发现新版本: {latest_version}")
+                self.update_status_label.setStyleSheet("color: green;")
 
-                if self.compare_versions(latest_version_num, current_version) > 0:
-                    # 有新版本
-                    self.update_status_label.setText(f"发现新版本: {latest_version}")
-                    self.update_status_label.setStyleSheet("color: green;")
+                reply = QMessageBox.question(
+                    parent_dialog,
+                    "发现新版本",
+                    f"当前版本: {__version__}\n"
+                    f"最新版本: {latest_version}\n\n"
+                    f"是否直接下载更新?",
+                    QMessageBox.Yes | QMessageBox.No
+                )
 
-                    reply = QMessageBox.question(
-                        parent_dialog,
-                        "发现新版本",
-                        f"当前版本: {__version__}\n"
-                        f"最新版本: {latest_version}\n\n"
-                        f"是否前往下载页面?",
-                        QMessageBox.Yes | QMessageBox.No
-                    )
-
-                    if reply == QMessageBox.Yes:
+                if reply == QMessageBox.Yes:
+                    download_urls = self.get_download_urls(latest_version)
+                    dest_path = f"ShigureAI_{latest_version}.exe"
+                    
+                    if self.download_with_fallback(download_urls, dest_path):
+                        QMessageBox.information(
+                            parent_dialog,
+                            "下载完成",
+                            f"新版本已下载到: {dest_path}\n请关闭当前程序后运行新版本。"
+                        )
+                    else:
+                        QMessageBox.warning(
+                            parent_dialog,
+                            "下载失败",
+                            "所有下载源均不可用，请手动前往GitHub下载页面。"
+                        )
                         import webbrowser
                         webbrowser.open("https://github.com/Arantir1028/ShigureAI/releases/latest")
-
-                else:
-                    # 已经是最新版本
-                    self.update_status_label.setText(f"当前已是最新版本: {__version__}")
-                    self.update_status_label.setStyleSheet("color: green;")
-
-                    QMessageBox.information(
-                        parent_dialog,
-                        "版本检查",
-                        f"当前版本 {__version__} 已是最新版本！"
-                    )
-
             else:
-                # API请求失败
-                self.update_status_label.setText("检查更新失败")
-                self.update_status_label.setStyleSheet("color: red;")
+                self.update_status_label.setText(f"当前已是最新版本: {__version__}")
+                self.update_status_label.setStyleSheet("color: green;")
 
-                QMessageBox.warning(
+                QMessageBox.information(
                     parent_dialog,
-                    "检查更新",
-                    "无法连接到GitHub服务器，请稍后重试。"
+                    "版本检查",
+                    f"当前版本 {__version__} 已是最新版本！"
                 )
+
+        except Exception as e:
+            self.update_status_label.setText("检查更新失败")
+            self.update_status_label.setStyleSheet("color: red;")
+            
+            QMessageBox.warning(
+                parent_dialog,
+                "检查更新",
+                f"检查更新时发生错误: {str(e)}"
+            )
 
         except ImportError:
             self.update_status_label.setText("缺少requests库")
