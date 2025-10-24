@@ -49,6 +49,7 @@ def build_executable():
         '--enable-plugin=pyqt5',
         '--disable-console',
         '--show-scons',
+        '--disable-dll-dependency-cache',
         '--noinclude-default-mode=error',
         '--windows-icon-from-ico=icon.ico',
         '--output-filename=ShigureAI_v0.0.3.exe',
@@ -64,7 +65,6 @@ def build_executable():
         '--low-memory',  # 低内存模式
         '--plugin-no-detection',  # 禁用插件检测
         '--lto=yes',  # 启用链接时优化
-        '--mingw64',  # 使用 mingw64 编译器
         '--noinclude-setuptools-mode=nofollow',
         '--noinclude-pytest-mode=nofollow',
         '--noinclude-unittest-mode=nofollow',
