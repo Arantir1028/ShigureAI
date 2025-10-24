@@ -64,6 +64,7 @@ def build_executable():
         '--low-memory',  # 低内存模式
         '--plugin-no-detection',  # 禁用插件检测
         '--lto=yes',  # 启用链接时优化
+        '--mingw64',  # 使用 mingw64 编译器
         '--noinclude-setuptools-mode=nofollow',
         '--noinclude-pytest-mode=nofollow',
         '--noinclude-unittest-mode=nofollow',

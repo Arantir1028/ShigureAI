@@ -28,6 +28,9 @@ jobs:
         run: |
           pip install nuitka
 
+      - name: Install MinGW
+        run: choco install mingw -y
+
       - name: Run Nuitka build script
         run: python build_nuitka.py
 
