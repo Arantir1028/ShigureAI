@@ -59,7 +59,7 @@
 - 更新地址：https://github.com/Arantir1028/ShigureAI/releases/latest
 
 ## 构建可执行文件
-使用Nuitka打包：`python build_nuitka.py`
+使用Nuitka打包：`python build.py`
 
 > **注意**: 使用Nuitka编译可以获得更小的文件体积和更快的启动速度。
 
