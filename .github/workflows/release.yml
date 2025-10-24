@@ -27,7 +27,6 @@ jobs:
       - name: Install Nuitka dependencies
         run: |
           pip install nuitka
-          pip install mingw64
 
       - name: Run Nuitka build script
         run: python build_nuitka.py
