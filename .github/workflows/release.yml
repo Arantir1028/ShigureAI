@@ -24,13 +24,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run build script
-        run: python build.py
+      - name: Install Nuitka dependencies
+        run: |
+          pip install nuitka
+          pip install mingw64
 
-      - name: Read version from file
+      - name: Run Nuitka build script
+        run: python build_nuitka.py
+
+      - name: Read version from build script
         id: version
         run: |
-          $version = Get-Content VERSION | Select-String -Pattern '^v.*' | Select-Object -First 1
+          $version = python -c "import build_nuitka; print(build_nuitka.__version__)"
           echo "version=$version" >> $env:GITHUB_OUTPUT
 
       - name: Create GitHub Release
@@ -38,8 +43,18 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.version }}
           name: Release ${{ steps.version.outputs.version }}
-          body_path: VERSION
+          body: |
+            ## ShigureAI ${{ steps.version.outputs.version }}
+            
+            ### 优化说明
+            - 使用 Nuitka 编译，体积更小，启动更快
+            - 排除了未使用的Qt模块和第三方库
+            - 启用了LTO链接时优化
+            - 禁用了文档字符串和断言以减小体积
+            
+            ### 文件说明
+            - `ShigureAI_v0.0.3.exe`: 主程序可执行文件
           files: |
-            dist/*.exe
+            ShigureAI_v0.0.3.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,23 +1,58 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-__version__ = "v0.0.2"
+__version__ = "v0.0.3"
 
 import sys
 import os
 import json
-import pandas as pd
+import csv
+import requests
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QLabel, QLineEdit, QPushButton, QGridLayout, QScrollArea,
                              QFrame, QGroupBox, QTextEdit, QFileDialog, QMessageBox,
-                             QInputDialog, QComboBox, QSpinBox, QDialog, QCheckBox,
-                             QTabWidget, QListWidget, QListWidgetItem)
+                             QComboBox, QSpinBox, QDialog, QCheckBox, QMenuBar, QMenu, QAction)
 from PyQt5.QtGui import QPixmap, QIcon, QFont
 from PyQt5.QtCore import Qt, QTimer
 import re
 
 from utils import resource_path, get_gift_icon
 from gift_config_dialog import GiftConfigDialog
+
+class SimpleDataFrame:
+    def __init__(self, data, columns):
+        self.data = data
+        self.columns = columns
+        self._column_index = {col: i for i, col in enumerate(columns)}
+    
+    def __len__(self):
+        return len(self.data)
+    
+    def __iter__(self):
+        for row in self.data:
+            yield dict(zip(self.columns, row))
+    
+    def loc(self, condition_func):
+        result_data = []
+        for row in self.data:
+            row_dict = dict(zip(self.columns, row))
+            if condition_func(row_dict):
+                result_data.append(row)
+        return SimpleDataFrame(result_data, self.columns)
+    
+    def get(self, key, default=None):
+        if key in self._column_index:
+            col_idx = self._column_index[key]
+            return [row[col_idx] for row in self.data]
+        return default
+    
+    def iterrows(self):
+        for i, row in enumerate(self.data):
+            row_dict = dict(zip(self.columns, row))
+            yield i, row_dict
+
+def notna(value):
+    return value is not None and value != '' and str(value).strip() != ''
 
 class FavorCalculator(QMainWindow):
     def __init__(self):
@@ -36,19 +71,26 @@ class FavorCalculator(QMainWindow):
         self.init_data()
         self.init_ui()
         self.load_last_config()
+    
+    def load_csv_data(self, file_path):
+        data = []
+        with open(file_path, 'r', encoding='utf-8-sig') as f:
+            reader = csv.reader(f)
+            columns = next(reader)
+            columns = [col.strip('\ufeff') for col in columns]
+            for row in reader:
+                data.append(row)
+        return SimpleDataFrame(data, columns)
 
     def init_data(self):
         """初始化数据"""
         try:
-            # 读取礼物数据
-            self.gifts_data = pd.read_excel(resource_path('giftID.xlsx'))
+            self.gifts_data = self.load_csv_data(resource_path('giftID.csv'))
             print(f"加载了 {len(self.gifts_data)} 个礼物")
 
-            # 读取好感等级数据
-            self.levels_data = pd.read_excel(resource_path('exp.xlsx'))
+            self.levels_data = self.load_csv_data(resource_path('exp.csv'))
             print(f"加载了 {len(self.levels_data)} 个等级")
 
-            # 确保 configs 目录存在（在exe目录下）
             os.makedirs(resource_path("configs", use_exe_dir_for_config=True), exist_ok=True)
             config_file = os.path.join(resource_path("configs", use_exe_dir_for_config=True), "config.json")
 
@@ -64,7 +106,7 @@ class FavorCalculator(QMainWindow):
         """初始化UI"""
         self.setWindowTitle(f"ShigureAI {__version__}")
         self.setWindowIcon(QIcon(resource_path("icon.ico")))
-        self.setGeometry(100, 100, 1200, 800)
+        self.setGeometry(100, 100, 1600, 900)
 
         self.create_menu_bar()
 
@@ -79,39 +121,32 @@ class FavorCalculator(QMainWindow):
         main_layout.addWidget(right_panel, 3)
 
     def create_menu_bar(self):
-        """创建菜单栏"""
-        from PyQt5.QtWidgets import QMenuBar, QMenu, QAction
-
-        # 创建菜单栏
         menubar = self.menuBar()
 
-        # 帮助菜单
-        help_menu = menubar.addMenu('帮助')
-
-        # 关于动作
         about_action = QAction('关于', self)
         about_action.triggered.connect(self.show_about)
-        help_menu.addAction(about_action)
+        menubar.addAction(about_action)
 
-        # 版本动作
         version_action = QAction('版本信息', self)
         version_action.triggered.connect(self.show_version)
-        help_menu.addAction(version_action)
+        menubar.addAction(version_action)
+
+        help_action = QAction('帮助', self)
+        help_action.triggered.connect(self.show_help)
+        menubar.addAction(help_action)
 
     def show_about(self):
-        """显示关于对话框"""
         QMessageBox.about(self, "关于",
                          f"<h2>ShigureAI</h2>"
                          f"<p><strong>版本:</strong> {__version__}</p>"
                          f"<p>这是一个用于计算《蔚蓝档案》游戏中学生好感度的工具。</p>"
                          f"<p>支持特殊喜好礼物配置、批量导入和计算预计等级。</p>"
                          f"<p><strong>作者:</strong> 学识 @ <a href='https://space.bilibili.com/127207268?spm_id_from=333.1007.0.0'>Arantir_</a></p>"
+                         f"<p><strong>项目地址:</strong> <a href='https://github.com/Arantir1028/ShigureAI'>https://github.com/Arantir1028/ShigureAI</a></p>"
                          f"<p><strong>许可证:</strong> GPL-3.0</p>")
 
     def show_version(self):
         """显示版本信息"""
-        from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTextEdit, QApplication
-        import requests
 
         dialog = QDialog(self)
         dialog.setWindowTitle("版本信息")
@@ -169,8 +204,6 @@ class FavorCalculator(QMainWindow):
     def check_for_updates(self, parent_dialog):
         """检查更新"""
         try:
-            import requests
-            from PyQt5.QtWidgets import QMessageBox
 
             self.update_status_label.setText("正在检查更新...")
             self.update_status_label.setStyleSheet("color: blue;")
@@ -450,7 +483,7 @@ class FavorCalculator(QMainWindow):
             self.gifts_layout.addWidget(gift_frame, row, col)
 
             col += 1
-            if col >= 4:  # 每行4个礼物
+            if col >= 5:  # 每行5个礼物
                 col = 0
                 row += 1
 
@@ -463,7 +496,7 @@ class FavorCalculator(QMainWindow):
         layout = QVBoxLayout(frame)
 
         try:
-            gift_id = int(gift['ID']) if pd.notna(gift['ID']) else 0
+            gift_id = int(gift['ID']) if notna(gift['ID']) else 0
             image_path = resource_path(os.path.join("pic", f"{gift_id}.jpg"))
             print(f"主界面加载图片: {gift_id}, 路径: {image_path}, 存在: {os.path.exists(image_path)}")
             if os.path.exists(image_path):
@@ -486,7 +519,7 @@ class FavorCalculator(QMainWindow):
             placeholder_label.setStyleSheet("color: gray; font-size: 12px;")
             layout.addWidget(placeholder_label)
 
-        gift_name = str(gift['礼物名']) if pd.notna(gift['礼物名']) else "未知礼物"
+        gift_name = str(gift['礼物名']) if notna(gift['礼物名']) else "未知礼物"
         name_label = QLabel(gift_name)
         name_label.setWordWrap(True)
         name_label.setAlignment(Qt.AlignCenter)
@@ -508,12 +541,12 @@ class FavorCalculator(QMainWindow):
         layout.addLayout(input_layout)
 
         try:
-            gift_id = int(gift['ID']) if pd.notna(gift['ID']) else None
+            gift_id = int(gift['ID']) if notna(gift['ID']) else None
             if gift_id is not None:
                 self.gift_inputs[gift_id] = {
                     'spinbox': spin_box,
-                    'base_favor': int(gift.get('基础经验值', 0)) if pd.notna(gift.get('基础经验值')) else 0,
-                    'name': str(gift.get('礼物名', '')) if pd.notna(gift.get('礼物名')) else '未知礼物'
+                    'base_favor': int(gift.get('基础经验值', 0)) if notna(gift.get('基础经验值')) else 0,
+                    'name': str(gift.get('礼物名', '')) if notna(gift.get('礼物名')) else '未知礼物'
                 }
         except (ValueError, TypeError):
             pass
@@ -586,6 +619,15 @@ class FavorCalculator(QMainWindow):
                 'is_linked_student': False # 新增联动学生状态
             }
 
+            # 保存当前的礼物数量到新配置
+            current_gift_quantities = {}
+            for gift_id, gift_info in self.gift_inputs.items():
+                spinbox = gift_info['spinbox']
+                if spinbox is not None:
+                    current_gift_quantities[gift_id] = spinbox.value()
+            
+            self.student_configs[name]['gift_quantities'] = current_gift_quantities
+            
             # 重置等级和经验为1级0经验
             self.current_level = 1
             self.current_exp = 0
@@ -734,7 +776,9 @@ class FavorCalculator(QMainWindow):
 
     def on_gift_quantity_changed(self):
         """礼物数量改变时自动计算"""
-        self.config_modified = True  # 标记配置已修改
+        # 如果有配置，标记为已修改
+        if self.current_config:
+            self.config_modified = True
         QTimer.singleShot(500, self.calculate_favor)  # 延迟500ms计算，避免频繁计算
 
     def calculate_favor(self):
@@ -743,10 +787,10 @@ class FavorCalculator(QMainWindow):
             return
 
         # 获取当前等级的累计经验（从1级到当前等级的总经验）
-        current_level_row = self.levels_data.loc[self.levels_data['当前等级'] == self.current_level]
-        if not current_level_row.empty:
+        current_level_row = self.levels_data.loc(lambda row: int(row['当前等级']) == self.current_level)
+        if len(current_level_row) > 0:
             # 达到当前等级所需的总经验
-            current_cumulative_exp = current_level_row.iloc[0]['达到等级累计经验']
+            current_cumulative_exp = int(current_level_row.data[0][current_level_row._column_index['达到等级累计经验']])
         else:
             current_cumulative_exp = 0
 
@@ -771,9 +815,10 @@ class FavorCalculator(QMainWindow):
 
         # 从当前等级开始向上查找能达到的最高等级
         for level in range(self.current_level, 101):  # 从当前等级到100级
-            level_row = self.levels_data.loc[self.levels_data['当前等级'] == level]
-            if not level_row.empty:
-                if total_exp >= level_row.iloc[0]['达到等级累计经验']:
+            level_row = self.levels_data.loc(lambda row: int(row['当前等级']) == level)
+            if len(level_row) > 0:
+                required_exp = int(level_row.data[0][level_row._column_index['达到等级累计经验']])
+                if total_exp >= required_exp:
                     target_level = level
                 else:
                     break
@@ -787,9 +832,9 @@ class FavorCalculator(QMainWindow):
 
         # 检查是否还有下一等级
         if target_level < 100:
-            next_level_rows = self.levels_data.loc[self.levels_data['当前等级'] == target_level + 1, '达到等级累计经验']
-            if not next_level_rows.empty:
-                next_level_exp = next_level_rows.iloc[0]
+            next_level_rows = self.levels_data.loc(lambda row: int(row['当前等级']) == target_level + 1)
+            if len(next_level_rows) > 0:
+                next_level_exp = int(next_level_rows.data[0][next_level_rows._column_index['达到等级累计经验']])
                 remaining_exp = next_level_exp - total_exp
                 result_text += f"升级到 {target_level + 1} 级还需要经验: {remaining_exp}"
             else:
@@ -801,18 +846,21 @@ class FavorCalculator(QMainWindow):
 
     def get_actual_favor(self, gift_id, base_favor):
         """获取礼物的实际好感度"""
-        is_linked = False
-        if self.is_linked_student_checkbox is not None:
-            is_linked = self.is_linked_student_checkbox.isChecked()
-        if self.current_config not in self.student_configs:
-            print(f"get_actual_favor: no current_config -> gift_id={gift_id}, base_favor={base_favor}, is_linked={is_linked}")
-            if is_linked and gift_id == 100008:
-                return 20
+        # 优先使用config中的状态，确保一致性
+        if self.current_config and self.current_config in self.student_configs:
+            config = self.student_configs[self.current_config]
+            is_linked = config.get('is_linked_student', False)
+        else:
+            # 如果没有配置，使用checkbox状态
+            is_linked = False
+            if self.is_linked_student_checkbox is not None:
+                is_linked = self.is_linked_student_checkbox.isChecked()
+            # 没有配置时，直接返回基础好感度
+            if is_linked:
+                if gift_id == 100008:
+                    return 20
+                return base_favor
             return base_favor
-
-        config = self.student_configs[self.current_config]
-        cfg_is_linked = config.get('is_linked_student', False)
-        print(f"get_actual_favor: gift_id={gift_id}, base_favor={base_favor}, checkbox_is_linked={is_linked}, config_is_linked={cfg_is_linked}")
 
         if is_linked:
             if gift_id == 100008:
@@ -832,15 +880,53 @@ class FavorCalculator(QMainWindow):
 
         return base_favor
 
+    def show_help(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("帮助")
+        dialog.setModal(True)
+        dialog.resize(600, 400)
+
+        layout = QVBoxLayout(dialog)
+
+        help_text = QTextEdit()
+        help_text.setReadOnly(True)
+        help_text.setHtml("""
+        <h2>功能</h2>
+        <ul>
+        <li>配置学生特殊喜好礼物</li>
+        <li>输入礼物数量并计算好感度升级</li>
+        <li>支持联动学生模式</li>
+        <li>支持通过bacv格式字符串导入库存，Alice用户可粘贴"ba导出bacv"得到的字符串一键导入库存</li>
+        <li>保存/加载配置</li>
+        </ul>
+        
+        <h2>使用</h2>
+        <ul>
+        <li>创建或加载配置</li>
+        <li>配置特殊喜好（金/紫礼物）</li>
+        <li>输入礼物数量</li>
+        <li>点击计算查看结果</li>
+        </ul>
+        """)
+        
+        layout.addWidget(help_text)
+
+        close_btn = QPushButton("关闭")
+        close_btn.clicked.connect(dialog.accept)
+        layout.addWidget(close_btn)
+
+        dialog.exec_()
+
     def on_linked_student_toggled(self, state):
         """处理联动学生复选框切换"""
         is_linked = state == Qt.Checked
         # 启用/禁用配置特殊礼物按钮
         self.config_gifts_btn.setEnabled(not is_linked)
 
-        # 如果没有当前配置，只更新 UI 状态
+        # 如果没有当前配置，仍然需要重新计算
         if not self.current_config or self.current_config not in self.student_configs:
-            # 仍然保存状态到 checkbox（已由系统做），不再其他处理
+            # 重新计算以反映联动状态变化
+            self.calculate_favor()
             return
 
         config = self.student_configs[self.current_config]

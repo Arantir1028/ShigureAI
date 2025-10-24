@@ -1,4 +1,4 @@
-import pandas as pd
+import csv
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QGroupBox, QListWidget, QTabWidget, QListWidgetItem, QMessageBox, QWidget
 from PyQt5.QtCore import Qt
 from utils import resource_path, get_gift_icon
@@ -93,10 +93,10 @@ class GiftConfigDialog(QDialog):
         list_widget = QListWidget()
         list_widget.setSelectionMode(QListWidget.NoSelection)
 
-        filtered_gifts = self.gifts_data[self.gifts_data['基础经验值'] == base_favor]
+        filtered_gifts = self.gifts_data.loc(lambda row: int(row['基础经验值']) == base_favor)
         for _, gift in filtered_gifts.iterrows():
-            gift_id = int(gift['ID']) if pd.notna(gift['ID']) else None
-            gift_name = str(gift['礼物名']) if pd.notna(gift['礼物名']) else "未知礼物"
+            gift_id = int(gift['ID']) if gift['ID'] and str(gift['ID']).strip() else None
+            gift_name = str(gift['礼物名']) if gift['礼物名'] and str(gift['礼物名']).strip() else "未知礼物"
             if gift_id is None:
                 continue
 

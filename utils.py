@@ -13,10 +13,8 @@ def resource_path(relative_path, use_exe_dir_for_config=False):
     - 配置文件：始终放在 exe 同目录下
     """
     if use_exe_dir_for_config:
-        # 始终返回 exe 所在目录
         base_path = os.path.dirname(os.path.abspath(sys.argv[0]))
     else:
-        # 普通资源照旧
         base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(sys.argv[0])))
     return os.path.join(base_path, relative_path)
 
