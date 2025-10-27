@@ -66,8 +66,8 @@ jobs:
             - 禁用了文档字符串和断言以减小体积
             
             ### 文件说明
-            - `ShigureAI_v0.0.3.exe`: 主程序可执行文件
+            - `ShigureAI_v0.1.0.exe`: 主程序可执行文件
           files: |
-            ShigureAI_v0.0.3.exe
+            ShigureAI_v0.1.0.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

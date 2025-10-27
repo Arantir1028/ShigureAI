@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-__version__ = "v0.0.3"
+__version__ = "v0.1.0"
 
 import os
 import sys
@@ -30,7 +30,7 @@ def build_executable():
             return False
     
     print("Cleaning previous build files...")
-    cleanup_paths = ["build", "dist", "ShigureAI_v0.0.3.exe", "ShigureAI_v0.0.3.dist"]
+    cleanup_paths = ["build", "dist", "ShigureAI_v0.1.0.exe", "ShigureAI_v0.1.0.dist"]
     for path in cleanup_paths:
         if os.path.exists(path):
             if os.path.isdir(path):
@@ -51,7 +51,7 @@ def build_executable():
         '--disable-dll-dependency-cache',
         '--noinclude-default-mode=error',
         '--windows-icon-from-ico=icon.ico',
-        '--output-filename=ShigureAI_v0.0.3.exe',
+        '--output-filename=ShigureAI_v0.1.0.exe',
         '--include-data-files=giftID.csv=giftID.csv',
         '--include-data-files=exp.csv=exp.csv',
         '--include-data-files=icon.ico=icon.ico',
@@ -132,7 +132,7 @@ def build_executable():
         duration = end_time - start_time
         
         print("✅ Nuitka 打包成功！")
-        print(f"📦 生成文件: ShigureAI_v0.0.3.exe")
+        print(f"📦 生成文件: ShigureAI_v0.1.0.exe")
         print(f"⏱️ 编译时间: {duration/60:.1f} 分钟")
         return True
         
@@ -168,7 +168,7 @@ if __name__ == "__main__":
     
     if build_executable():
         print(f"\n🚀 版本 {__version__} ShigureAI Nuitka 打包完成！")
-        print(f"📦 可执行文件: ShigureAI_v0.0.3.exe")
+        print(f"📦 可执行文件: ShigureAI_v0.1.0.exe")
         
     else:
         sys.exit(1)
