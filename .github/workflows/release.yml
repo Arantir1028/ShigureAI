@@ -45,10 +45,10 @@ jobs:
       - name: Run Nuitka build script
         run: python build.py
 
-      - name: Read version from build script
+      - name: Read version from version.py
         id: version
         run: |
-          $version = python -c "import build; print(build.__version__)"
+          $version = python -c "from version import __version__; print(__version__)"
           echo "version=$version" >> $env:GITHUB_OUTPUT
 
       - name: Create GitHub Release
@@ -59,15 +59,15 @@ jobs:
           body: |
             ## ShigureAI ${{ steps.version.outputs.version }}
             
-            ### 优化说明
-            - 使用 Nuitka 编译，体积更小，启动更快
-            - 排除了未使用的Qt模块和第三方库
-            - 启用了LTO链接时优化
-            - 禁用了文档字符串和断言以减小体积
-            
+            ### 变更
+            - 代码重构
+
+            ### 问题修复
+            - 修复勾选“联动学生”导致特殊喜好丢失的问题
+
             ### 文件说明
-            - `ShigureAI_v0.1.0.exe`: 主程序可执行文件
+            - `ShigureAI_${{ steps.version.outputs.version }}.exe`: 主程序可执行文件
           files: |
-            ShigureAI_v0.1.0.exe
+            ShigureAI_${{ steps.version.outputs.version }}.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

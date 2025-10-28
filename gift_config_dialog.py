@@ -25,12 +25,10 @@ class GiftConfigDialog(QDialog):
 
             conflicts = self.level40_gifts & self.level60_gifts
             if conflicts:
-                print(f"解决冲突: {conflicts}")
                 self.level60_gifts -= conflicts
 
             conflicts = self.level180_gifts & self.level240_gifts
             if conflicts:
-                print(f"解决冲突: {conflicts}")
                 self.level240_gifts -= conflicts
 
         self.init_ui()
